@@ -1,8 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-#Выполните расчет бюджета восходящего канала, используя
-#входные данные и определите уровень максимально допустимых потерь
-#сигнала MAPL_UL.
 
 #TxPowerUE-FeederLoss+ANtGainsBS+MIMOGain-PL(d)-IM-PenetrationM>=RxSensBs
 
@@ -39,10 +36,7 @@ ThermalNoiseDL = -174 + 10*np.log10(FreqDL)
 RxSensUE = ThermalNoiseDL + NoiseFigureUE + SINR_DL
 MAPL_DL =  TxPowerBS - FeederLoss + AntGainsBS + MIMOGain - IM - PenetrationM - RxSensUE
 print(f"MAPL_DL", MAPL_DL)
-#3 Постройте зависимость величины входных потерь (MAPL_UL??) радиосигнала от
-#расстояния между приемником и передатчиком по всем трем описанным в п.2.2
-#моделям. Выберите нужную модель для заданных условий.
-
+#3
 #PL(d)=26*log(10)(f)+22.7+26.7*log(10)(d)
 d = np.linspace(1, 300, 300)
 PL_UMiNLOS = 26*np.log10(Freq) + 22.7 + 36.7 * np.log10(d)
@@ -71,7 +65,7 @@ plt.xlabel('Расстояние между приемником и переда
 plt.ylabel('Потери сигнала, дБ')
 plt.grid(True)
 
-d_walfish_ikegami = np.linspace(0.3, 10, 600)
+d_walfish_ikegami = np.linspace(0.1, 10, 600)
 Llos = 42.6+20*np.log10(f)+26*np.log10(d_walfish_ikegami)
 plt.figure(figsize=(10, 5))
 plt.plot(d_walfish_ikegami, Llos)
@@ -79,7 +73,6 @@ plt.title('Модель Walfish-Ikegami')
 plt.xlabel('Расстояние между приемником и передатчиком, км')
 plt.ylabel('Потери сигнала, дБ')
 plt.grid(True)
-plt.show()
 
 #4 для модели COST231
 
@@ -96,3 +89,24 @@ N = S / S_BS
 print(f"Радиус БС {R:.3f}")
 print(f"Площадь 1 БС, {S_BS:.3f}")
 print(f"Требуемое количество БС, {N:.3f}")
+
+#доп
+d_km_dop = np.linspace(0.05, 4, 20000)
+PL_COST231_dop = A + B*np.log10(f) - 13.82*np.log10(hBS) - a + s*np.log10(d_km_dop) + Lclutter
+t_C = np.linspace(-20, 40, 61)   # от -20 до +40
+CellRange = np.zeros_like(t_C)
+for i, t in enumerate(t_C):
+    T = t + 273.15
+    ThermalNoise_T = -174 + 10*np.log10(T/290) + 10*np.log10(FreqUL)
+    RxSensBs_dop = ThermalNoise_T + NoiseFigureBS + SINR_UL
+    MAPL_UL_T = TxPowerUE - FeederLoss + AntGainsBS + MIMOGain - IM - PenetrationM - RxSensBs_dop
+    idx = np.argmin(np.abs(PL_COST231_dop - MAPL_UL_T))
+    CellRange[i] = d_km_dop[idx]
+
+plt.figure(figsize=(10, 5))
+plt.plot(t_C, CellRange)
+plt.title('Влияние температуры на модель Окумура-Хата')
+plt.xlabel('t, C')
+plt.ylabel('CellRange, км')
+plt.grid(True)
+plt.show()

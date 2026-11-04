@@ -17,30 +17,43 @@ for k in range(sr):
 t = np.array(t)
 
 y = A*np.sin(2*np.pi*f*t + np.pi/3)
+
 #4
-fs = 12 #3 по т. Котельникова
+fs = 48 #3 по т. Котельникова
 t_disc = []
 for k in range(fs):
     t_disc.append(k*(1/fs))
 t_disc = np.array(t_disc)
 
-y_disc = A * np.sin(2 * np.pi * f * t_disc + np.pi/3)
+y_disc = A * np.sin(2 * np.pi * f * t_disc + np.pi/3) + A * np.sin(2 * np.pi * 2*f * t_disc + np.pi/3) #что то тут не так в спектре фигня
 n = len(y_disc)
 # fyrie = np.fft.fft(y_disc)
 # print(fyrie)
 #5
 fyrie = []
 for x in range(n):
-    sum = 0
+    s = 0
     for time in range(n):
-        sum = sum + y_disc[time]*np.exp(-1j*2*np.pi*x*time/n)
-    fyrie.append(sum)
+        s = s + y_disc[time]*np.exp(-1j*2*np.pi*x*time/n)
+    fyrie.append(s)
 fyrie = np.array(fyrie)
 print(fyrie)
 
 print(f"Всего данных: {y_disc.nbytes} байт")
 print(f"Один элемент: {y_disc.itemsize} байт")
 print('---------------------')
+
+#вывести спектр этого сигнала
+#n номера элементов fyrie
+freq = np.arange(n) * fs / n
+amplitude = np.abs(fyrie) / n
+
+plt.figure(figsize=(10, 5))
+plt.stem(freq, amplitude, basefmt=" ")
+plt.title('Спектр дискретизированного сигнала')
+plt.xlabel('Частота, Гц')
+plt.ylabel('Амплитуда')
+plt.grid(True)
 
 #7
 fs_2 = 48
@@ -158,13 +171,14 @@ def quantize(signal, bits):
     s_max = np.max(signal)
     signal_norm = (signal - s_min) / (s_max - s_min) * levels
     signal_quant = np.round(signal_norm) # округляем до целых чисел (квантование)
+    signal_quant = signal_quant / levels * (s_max - s_min) + s_min
     return signal_quant
 signal = y.copy()
 
 fig13, axes13 = plt.subplots(5, 1, figsize=(12, 12))
 
 spectrum_orig = np.fft.fft(signal)
-freqs = np.fft.fftfreq(len(signal), d=1 / fs)
+freqs = np.fft.fftfreq(len(signal), d=1 / sr)
 half = len(freqs) // 2
 
 axes13[0].plot(freqs[:half], np.abs(spectrum_orig[:half]) / len(signal), 'r', label='без квантования')
